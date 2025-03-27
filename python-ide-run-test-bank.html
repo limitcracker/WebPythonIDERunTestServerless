@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Student Python IDE</title>
+    <!-- Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/brython@3.11.0/brython.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/brython@3.11.0/brython_stdlib.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <style>
+        .python-ide-widget {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #f5f5f5;
+        }
+        .python-ide-widget .header {
+            background-color: #6200ee;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px 8px 0 0;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .python-ide-widget .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+        .python-ide-widget .exercise-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .python-ide-widget .search-box {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 200px;
+        }
+        .python-ide-widget .filter-select {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: white;
+        }
+        .python-ide-widget .container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            min-height: 0;
+        }
+        .python-ide-widget .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .python-ide-widget .output-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .python-ide-widget .panel-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .python-ide-widget .CodeMirror {
+            height: 100% !important;
+            font-size: 14px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .python-ide-widget #output {
+            flex: 1;
+            border-radius: 8px;
+            padding: 15px;
+            overflow-y: auto;
+            background-color: #282a36;
+            color: #f8f8f2;
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin-bottom: 10px;
+        }
+        .python-ide-widget .button-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .python-ide-widget button {
+            background-color: #6200ee;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .python-ide-widget button:hover {
+            background-color: #3700b3;
+            transform: translateY(-1px);
+        }
+        .python-ide-widget button.secondary {
+            background-color: #03dac6;
+            color: #000;
+        }
+        .python-ide-widget button.secondary:hover {
+            background-color: #018786;
+        }
+        .python-ide-widget .test-results {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+        }
+        .python-ide-widget .test-pass {
+            color: #4caf50;
+        }
+        .python-ide-widget .test-fail {
+            color: #f44336;
+        }
+        .python-ide-widget .status-bar {
+            background-color: #e0e0e0;
+            padding: 8px 15px;
+            font-size: 12px;
+            color: #333;
+            border-radius: 0 0 8px 8px;
+            margin-top: 20px;
+        }
+        .python-ide-widget .exercise-info {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .python-ide-widget .exercise-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .python-ide-widget .exercise-description {
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .python-ide-widget .exercise-tags {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .python-ide-widget .tag {
+            background-color: #e0e0e0;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #333;
+        }
+        .python-ide-widget .difficulty-easy {
+            color: #4caf50;
+        }
+        .python-ide-widget .difficulty-medium {
+            color: #ff9800;
+        }
+        .python-ide-widget .difficulty-hard {
+            color: #f44336;
+        }
+        /* Modal styles */
+        .python-ide-widget .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        .python-ide-widget .modal-content {
+            position: relative;
+            background-color: #fff;
+            margin: 50px auto;
+            padding: 20px;
+            width: 80%;
+            max-width: 800px;
+            border-radius: 8px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .python-ide-widget .close-modal {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        .python-ide-widget .exercise-list {
+            margin-top: 20px;
+            display: grid;
+            gap: 15px;
+        }
+        .python-ide-widget .exercise-item {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .python-ide-widget .exercise-item:hover {
+            background-color: #e0e0e0;
+            transform: translateY(-2px);
+        }
+        .python-ide-widget .modal-header {
+            margin-bottom: 20px;
+            padding-right: 30px;
+        }
+        .python-ide-widget .modal-search {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+        .python-ide-widget .clear-filters {
+            background-color: #e0e0e0;
+            color: #333;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        .python-ide-widget .clear-filters:hover {
+            background-color: #d0d0d0;
+        }
+    </style>
+</head>
+<body onload="brython()">
+    <div id="python-ide">
+        <div class="python-ide-widget">
+            <div class="header">
+                <h1>Python IDE with Tests</h1>
+                <div class="exercise-controls">
+                    <button onclick="document.getElementById('exercise-modal').style.display='block'" class="secondary">
+                        Browse Exercises
+                    </button>
+                </div>
+            </div>
+            <!-- Exercise Modal -->
+            <div id="exercise-modal" class="modal">
+                <div class="modal-content">
+                    <span class="close-modal" onclick="document.getElementById('exercise-modal').style.display='none'">&times;</span>
+                    <div class="modal-header">
+                        <h2>Browse Exercises</h2>
+                        <div class="modal-search">
+                            <input type="text" id="modal-search-box" class="search-box" placeholder="Search exercises...">
+                            <select id="modal-difficulty-filter" class="filter-select">
+                                <option value="">All Difficulties</option>
+                                <option value="easy">Easy</option>
+                                <option value="medium">Medium</option>
+                                <option value="hard">Hard</option>
+                            </select>
+                            <select id="modal-category-filter" class="filter-select">
+                                <option value="">All Categories</option>
+                            </select>
+                            <button id="clear-filters" class="clear-filters">Clear Filters</button>
+                        </div>
+                    </div>
+                    <div id="exercise-list" class="exercise-list">
+                        <!-- Exercise items will be populated here -->
+                    </div>
+                </div>
+            </div>
+            <div class="exercise-info">
+                <div class="exercise-title" id="exercise-title">Select an exercise</div>
+                <div class="exercise-description" id="exercise-description"></div>
+                <div class="exercise-tags" id="exercise-tags"></div>
+            </div>
+            <div class="container">
+                <div class="editor-container">
+                    <div class="panel-title">Python Code Editor</div>
+                    <div class="button-container">
+                        <button id="run-btn">Run Code (Ctrl+Enter)</button>
+                        <button id="test-btn">Run Tests</button>
+                        <button id="clear-btn" class="secondary">Clear Output</button>
+                    </div>
+                    <textarea id="python-code"># Select an exercise to begin</textarea>
+                </div>
+                <div class="output-container">
+                    <div class="panel-title">Program Output</div>
+                    <div id="output"></div>
+                    <div class="test-results" id="test-results"></div>
+                </div>
+            </div>
+            <div class="status-bar">
+                Python 3 (Brython) | Ready
+            </div>
+        </div>
+    </div>
+
+    <script type="text/python">
+from browser import document, window, html
+import sys
+import json
+import javascript
+import traceback
+import random
+
+# Global variables
+editor = None
+current_exercise = None
+exercises = [
+    {
+        "id": "1",
+        "title": "Hello World",
+        "description": "Write a program that prints 'Hello, World!'",
+        "difficulty": "easy",
+        "category": "basics",
+        "code": 'print("Hello, World!")',
+        "tests": [
+            {"input": "", "expected": "Hello, World!"}
+        ]
+    },
+    {
+        "id": "2",
+        "title": "Sum Calculator",
+        "description": "Write a function that returns the sum of two numbers",
+        "difficulty": "easy",
+        "category": "functions",
+        "code": "def add(a, b):\n    # Your code here\n    pass",
+        "tests": [
+            {"input": "add(1, 2)", "expected": "3"},
+            {"input": "add(-1, 1)", "expected": "0"}
+        ]
+    },
+    {
+        "id": "3",
+        "title": "Factorial Calculator",
+        "description": "Write a recursive function to calculate factorial",
+        "difficulty": "medium",
+        "category": "recursion",
+        "code": "def factorial(n):\n    # Your code here\n    pass",
+        "tests": [
+            {"input": "factorial(5)", "expected": "120"},
+            {"input": "factorial(0)", "expected": "1"}
+        ]
+    }
+]
+
+def init():
+    global editor
+    # Initialize CodeMirror
+    editor = window.CodeMirror.fromTextArea(
+        document["python-code"],
+        {
+            'mode': 'python',
+            'theme': 'dracula',
+            'lineNumbers': True,
+            'matchBrackets': True,
+            'indentUnit': 4,
+            'extraKeys': {"Ctrl-Enter": lambda _: run_code()}
+        }
+    )
+    
+    output_div = document["output"]
+    test_results = document["test-results"]
+    
+    output_interceptor = OutputInterceptor(output_div)
+    sys.stdout = output_interceptor
+    sys.stderr = output_interceptor
+
+    # Bind event handlers
+    document["run-btn"].bind("click", run_code)
+    document["test-btn"].bind("click", run_tests)
+    document["clear-btn"].bind("click", clear_output)
+
+def clear_output(evt):
+    output_div = document["output"]
+    test_results = document["test-results"]
+    output_div.text = ""
+    test_results.innerHTML = ""
+
+def run_code(evt=None):
+    clear_output(None)
+    code = editor.getValue()
+    try:
+        exec(code, globals())
+    except Exception as e:
+        sys.stderr.write(f"Error: {str(e)}\n{traceback.format_exc()}")
+
+def run_tests(evt=None):
+    if not current_exercise or "tests" not in current_exercise:
+        return
+    
+    clear_output(None)
+    test_results = document["test-results"]
+    code = editor.getValue()
+    
+    # Create a new namespace for testing
+    test_globals = {}
+    test_globals.update(globals())
+    
+    try:
+        # First execute the student's code
+        exec(code, test_globals)
+        
+        # Then run each test
+        all_passed = True
+        for i, test in enumerate(current_exercise["tests"], 1):
+            try:
+                result = str(eval(test["input"], test_globals))
+                expected = str(test["expected"])
+                
+                if result == expected:
+                    test_results.innerHTML += f'<div class="test-pass">✓ Test {i} passed: {test["input"]} = {expected}</div>'
+                else:
+                    all_passed = False
+                    test_results.innerHTML += f'<div class="test-fail">✗ Test {i} failed: {test["input"]}<br>Expected: {expected}<br>Got: {result}</div>'
+            except Exception as e:
+                all_passed = False
+                test_results.innerHTML += f'<div class="test-fail">✗ Test {i} error: {str(e)}</div>'
+        
+        if all_passed:
+            test_results.innerHTML += '<div class="test-pass">All tests passed! 🎉</div>'
+            
+    except Exception as e:
+        test_results.innerHTML = f'<div class="test-fail">Error: {str(e)}</div>'
+
+class OutputInterceptor:
+    def __init__(self, output_div):
+        self.output_div = output_div
+        
+    def write(self, text):
+        self.output_div.text += str(text)
+        
+    def clear(self):
+        self.output_div.text = ""
+
+def filter_exercises(search_text="", difficulty="", category=""):
+    filtered = exercises[:]
+    
+    if search_text:
+        search_text = search_text.lower()
+        filtered = [e for e in filtered if search_text in e["title"].lower() or search_text in e["description"].lower()]
+    
+    if difficulty:
+        filtered = [e for e in filtered if e["difficulty"] == difficulty]
+    
+    if category:
+        filtered = [e for e in filtered if e["category"] == category]
+    
+    return filtered
+
+def update_exercise_list(*args):
+    search_text = document["modal-search-box"].value
+    difficulty = document["modal-difficulty-filter"].value
+    category = document["modal-category-filter"].value
+    
+    filtered_exercises = filter_exercises(search_text, difficulty, category)
+    exercise_list = document["exercise-list"]
+    exercise_list.clear()
+    
+    for exercise in filtered_exercises:
+        item = html.DIV(Class="exercise-item")
+        title = html.DIV(exercise["title"], Class=f"exercise-title difficulty-{exercise['difficulty']}")
+        desc = html.DIV(exercise["description"], Class="exercise-description")
+        tags = html.DIV(Class="exercise-tags")
+        tags <= html.SPAN(exercise["difficulty"].capitalize(), Class="tag")
+        tags <= html.SPAN(exercise["category"].capitalize(), Class="tag")
+        
+        item <= title
+        item <= desc
+        item <= tags
+        
+        def load_this_exercise(evt, exercise=exercise):
+            load_exercise(exercise)
+            document["exercise-modal"].style.display = "none"
+        
+        item.bind("click", load_this_exercise)
+        exercise_list <= item
+
+def load_exercise(exercise_data):
+    global current_exercise
+    current_exercise = exercise_data
+    
+    # Update exercise info
+    info_div = document.select_one(".exercise-info")
+    if info_div:
+        info_div.clear()
+        info_div <= html.DIV(exercise_data["title"], Class="exercise-title")
+        info_div <= html.DIV(exercise_data["description"], Class="exercise-description")
+        tags = html.DIV(Class="exercise-tags")
+        tags <= html.SPAN(exercise_data["difficulty"].capitalize(), Class="tag")
+        tags <= html.SPAN(exercise_data["category"].capitalize(), Class="tag")
+        info_div <= tags
+    
+    # Set code in editor
+    editor.setValue(exercise_data["code"])
+
+def clear_filters(evt=None):
+    # Reset all filter inputs
+    document["modal-search-box"].value = ""
+    document["modal-difficulty-filter"].value = ""
+    document["modal-category-filter"].value = ""
+    # Update the exercise list
+    update_exercise_list()
+
+# Initialize event listeners
+document["modal-search-box"].bind("input", update_exercise_list)
+document["modal-difficulty-filter"].bind("change", update_exercise_list)
+document["modal-category-filter"].bind("change", update_exercise_list)
+document["clear-filters"].bind("click", clear_filters)
+
+# Populate category filter with exact values
+categories = sorted(list(set(ex["category"] for ex in exercises)))
+category_select = document["modal-category-filter"]
+for category in categories:
+    category_select <= html.OPTION(category.capitalize(), value=category)
+
+# Initial setup
+init()
+update_exercise_list()
+    </script>
+</body>
+</html>
