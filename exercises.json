@@ -1,0 +1,64 @@
+{
+    "exercises": [
+        {
+            "id": "add_numbers",
+            "title": "Add Two Numbers",
+            "difficulty": "easy",
+            "category": "basic_math",
+            "description": "Write a function that returns the sum of two numbers",
+            "starter_code": "def add_numbers(a, b):\n    # Your code here\n    pass\n\n# Example usage:\nprint(add_numbers(5, 3))",
+            "test_cases": [
+                {"inputs": [5, 3], "expected": 8, "description": "Basic addition"},
+                {"inputs": [-1, 1], "expected": 0, "description": "Adding negative numbers"},
+                {"inputs": [0, 0], "expected": 0, "description": "Adding zeros"},
+                {"inputs": [1000, 2000], "expected": 3000, "description": "Large numbers"}
+            ],
+            "tags": ["math", "beginner", "functions"]
+        },
+        {
+            "id": "reverse_string",
+            "title": "Reverse String",
+            "difficulty": "easy",
+            "category": "strings",
+            "description": "Write a function that reverses a string",
+            "starter_code": "def reverse_string(text):\n    # Your code here\n    pass\n\n# Example usage:\nprint(reverse_string('hello'))",
+            "test_cases": [
+                {"inputs": ["hello"], "expected": "olleh", "description": "Basic string"},
+                {"inputs": [""], "expected": "", "description": "Empty string"},
+                {"inputs": ["a"], "expected": "a", "description": "Single character"},
+                {"inputs": ["12345"], "expected": "54321", "description": "Numbers as string"}
+            ],
+            "tags": ["strings", "beginner", "algorithms"]
+        },
+        {
+            "id": "is_palindrome",
+            "title": "Check Palindrome",
+            "difficulty": "medium",
+            "category": "strings",
+            "description": "Write a function that checks if a string is a palindrome (reads the same forwards and backwards)",
+            "starter_code": "def is_palindrome(text):\n    # Your code here\n    pass\n\n# Example usage:\nprint(is_palindrome('radar'))",
+            "test_cases": [
+                {"inputs": ["radar"], "expected": true, "description": "Basic palindrome"},
+                {"inputs": ["hello"], "expected": false, "description": "Non-palindrome"},
+                {"inputs": [""], "expected": true, "description": "Empty string"},
+                {"inputs": ["12321"], "expected": true, "description": "Numeric palindrome"}
+            ],
+            "tags": ["strings", "intermediate", "algorithms"]
+        },
+        {
+            "id": "fibonacci",
+            "title": "Fibonacci Number",
+            "difficulty": "medium",
+            "category": "algorithms",
+            "description": "Write a function that returns the nth number in the Fibonacci sequence",
+            "starter_code": "def fibonacci(n):\n    # Your code here\n    pass\n\n# Example usage:\nprint(fibonacci(5))",
+            "test_cases": [
+                {"inputs": [0], "expected": 0, "description": "First number"},
+                {"inputs": [1], "expected": 1, "description": "Second number"},
+                {"inputs": [5], "expected": 5, "description": "5th number"},
+                {"inputs": [10], "expected": 55, "description": "10th number"}
+            ],
+            "tags": ["math", "algorithms", "recursion"]
+        }
+    ]
+}
