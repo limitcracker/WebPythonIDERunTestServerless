@@ -6,6 +6,7 @@
     <!-- Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/brython@3.11.0/brython.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/brython@3.11.0/brython_stdlib.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
@@ -96,32 +97,6 @@
             white-space: pre-wrap;
             margin-bottom: 10px;
         }
-        .python-ide-widget .button-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .python-ide-widget button {
-            background-color: #6200ee;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-        .python-ide-widget button:hover {
-            background-color: #3700b3;
-            transform: translateY(-1px);
-        }
-        .python-ide-widget button.secondary {
-            background-color: #03dac6;
-            color: #000;
-        }
-        .python-ide-widget button.secondary:hover {
-            background-color: #018786;
-        }
         .python-ide-widget .test-results {
             margin-top: 15px;
             padding: 10px;
@@ -135,28 +110,72 @@
             color: #f44336;
         }
         .python-ide-widget .status-bar {
-            background-color: #e0e0e0;
+            background-color: #f5f5f5;
             padding: 8px 15px;
-            font-size: 12px;
-            color: #333;
-            border-radius: 0 0 8px 8px;
-            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .python-ide-widget .status-bar.loading {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .python-ide-widget .status-bar.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .python-ide-widget .status-bar.success {
+            background-color: #d4edda;
+            color: #155724;
         }
         .python-ide-widget .exercise-info {
-            background-color: white;
+            margin-bottom: 15px;
+            background: white;
             padding: 15px;
             border-radius: 8px;
-            margin-bottom: 15px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .python-ide-widget .exercise-title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
         }
         .python-ide-widget .exercise-title {
             font-size: 1.2em;
             font-weight: bold;
-            margin-bottom: 10px;
+            color: #333;
+            margin: 0;
+        }
+        .python-ide-widget .toggle-description {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            font-size: 0.9em;
+        }
+        .python-ide-widget .toggle-description:hover {
+            color: #333;
+        }
+        .python-ide-widget .toggle-description::before {
+            content: "▼";
+            display: inline-block;
+            margin-right: 5px;
+            transition: transform 0.2s;
+        }
+        .python-ide-widget .toggle-description.collapsed::before {
+            transform: rotate(-90deg);
         }
         .python-ide-widget .exercise-description {
-            color: #666;
-            margin-bottom: 10px;
+            transition: max-height 0.3s ease-out;
+            overflow: hidden;
+            max-height: 500px;
+        }
+        .python-ide-widget .exercise-description.collapsed {
+            max-height: 0;
         }
         .python-ide-widget .exercise-tags {
             display: flex;
@@ -183,31 +202,44 @@
         .python-ide-widget .modal {
             display: none;
             position: fixed;
-            top: 0;
+            z-index: 1000;
             left: 0;
+            top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
+            background-color: rgba(0,0,0,0.5);
+            overflow: hidden;
         }
         .python-ide-widget .modal-content {
-            position: relative;
-            background-color: #fff;
-            margin: 50px auto;
+            background-color: white;
+            margin: 5% auto;
             padding: 20px;
             width: 80%;
             max-width: 800px;
             border-radius: 8px;
-            max-height: 80vh;
+            position: relative;
+            max-height: 90vh;
             overflow-y: auto;
         }
         .python-ide-widget .close-modal {
             position: absolute;
             right: 20px;
-            top: 15px;
+            top: 10px;
             font-size: 24px;
-            cursor: pointer;
+            font-weight: bold;
             color: #666;
+            cursor: pointer;
+        }
+        .python-ide-widget .close-modal:hover {
+            color: #333;
+        }
+        .python-ide-widget .modal-header {
+            margin-bottom: 20px;
+        }
+        .python-ide-widget .modal-header h2 {
+            margin: 0 0 15px 0;
+            font-size: 1.5em;
+            color: #333;
         }
         .python-ide-widget .exercise-list {
             margin-top: 20px;
@@ -224,10 +256,6 @@
         .python-ide-widget .exercise-item:hover {
             background-color: #e0e0e0;
             transform: translateY(-2px);
-        }
-        .python-ide-widget .modal-header {
-            margin-bottom: 20px;
-            padding-right: 30px;
         }
         .python-ide-widget .modal-search {
             display: flex;
@@ -248,6 +276,61 @@
         .python-ide-widget .clear-filters:hover {
             background-color: #d0d0d0;
         }
+        .python-ide-widget .exercise-item .exercise-description {
+            color: #666;
+            margin: 10px 0;
+            line-height: 1.5;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .python-ide-widget .exercise-item .exercise-description code {
+            background-color: #f0f0f0;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .python-ide-widget .exercise-item .exercise-description pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .python-ide-widget .exercise-item .exercise-description ul, 
+        .python-ide-widget .exercise-item .exercise-description ol {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+        .python-ide-widget .exercise-item .exercise-description p {
+            margin: 8px 0;
+        }
+        .python-ide-widget .button-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .python-ide-widget button {
+            background-color: #6200ee;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .python-ide-widget button:hover {
+            background-color: #3700b3;
+            transform: translateY(-1px);
+        }
+        .python-ide-widget button.secondary {
+            background-color: #03dac6;
+            color: #000;
+        }
+        .python-ide-widget button.secondary:hover {
+            background-color: #018786;
+        }
     </style>
 </head>
 <body onload="brython()">
@@ -256,33 +339,29 @@
             <div class="header">
                 <h1>Python IDE with Tests</h1>
                 <div class="exercise-controls">
-                    <button onclick="document.getElementById('exercise-modal').style.display='block'" class="secondary">
-                        Browse Exercises
-                    </button>
+                    <button id="browse-exercises-btn" class="secondary" onclick="console.log('Button clicked'); document.getElementById('exercise-modal').style.display='block';">Browse Exercises</button>
                 </div>
             </div>
+
             <!-- Exercise Modal -->
             <div id="exercise-modal" class="modal">
                 <div class="modal-content">
-                    <span class="close-modal" onclick="document.getElementById('exercise-modal').style.display='none'">&times;</span>
+                    <span id="close-modal" class="close-modal" onclick="document.getElementById('exercise-modal').style.display='none';">&times;</span>
                     <div class="modal-header">
                         <h2>Browse Exercises</h2>
                         <div class="modal-search">
                             <input type="text" id="modal-search-box" class="search-box" placeholder="Search exercises...">
                             <select id="modal-difficulty-filter" class="filter-select">
                                 <option value="">All Difficulties</option>
-                                <option value="easy">Easy</option>
-                                <option value="medium">Medium</option>
-                                <option value="hard">Hard</option>
                             </select>
                             <select id="modal-category-filter" class="filter-select">
                                 <option value="">All Categories</option>
                             </select>
-                            <button id="clear-filters" class="clear-filters">Clear Filters</button>
+                            <button id="clear-filters-btn" class="clear-filters">Clear Filters</button>
                         </div>
                     </div>
                     <div id="exercise-list" class="exercise-list">
-                        <!-- Exercise items will be populated here -->
+                        <!-- Exercise items will be added here -->
                     </div>
                 </div>
             </div>
@@ -313,228 +392,375 @@
         </div>
     </div>
 
+    <script>
+        // Initialize marked with default options
+        window.marked = {
+            parse: function(text) {
+                return text ? text.replace(/\n/g, '<br>') : '';
+            }
+        };
+    </script>
+
     <script type="text/python">
-from browser import document, window, html
-import sys
+from browser import document, window, console, html
 import json
-import javascript
-import traceback
-import random
 
-# Global variables
-editor = None
-current_exercise = None
-exercises = [
-    {
-        "id": "1",
-        "title": "Hello World",
-        "description": "Write a program that prints 'Hello, World!'",
-        "difficulty": "easy",
-        "category": "basics",
-        "code": 'print("Hello, World!")',
-        "tests": [
-            {"input": "", "expected": "Hello, World!"}
-        ]
-    },
-    {
-        "id": "2",
-        "title": "Sum Calculator",
-        "description": "Write a function that returns the sum of two numbers",
-        "difficulty": "easy",
-        "category": "functions",
-        "code": "def add(a, b):\n    # Your code here\n    pass",
-        "tests": [
-            {"input": "add(1, 2)", "expected": "3"},
-            {"input": "add(-1, 1)", "expected": "0"}
-        ]
-    },
-    {
-        "id": "3",
-        "title": "Factorial Calculator",
-        "description": "Write a recursive function to calculate factorial",
-        "difficulty": "medium",
-        "category": "recursion",
-        "code": "def factorial(n):\n    # Your code here\n    pass",
-        "tests": [
-            {"input": "factorial(5)", "expected": "120"},
-            {"input": "factorial(0)", "expected": "1"}
-        ]
-    }
-]
-
-def init():
-    global editor
-    # Initialize CodeMirror
-    editor = window.CodeMirror.fromTextArea(
-        document["python-code"],
-        {
-            'mode': 'python',
-            'theme': 'dracula',
-            'lineNumbers': True,
-            'matchBrackets': True,
-            'indentUnit': 4,
-            'extraKeys': {"Ctrl-Enter": lambda _: run_code()}
-        }
-    )
-    
-    output_div = document["output"]
-    test_results = document["test-results"]
-    
-    output_interceptor = OutputInterceptor(output_div)
-    sys.stdout = output_interceptor
-    sys.stderr = output_interceptor
-
-    # Bind event handlers
-    document["run-btn"].bind("click", run_code)
-    document["test-btn"].bind("click", run_tests)
-    document["clear-btn"].bind("click", clear_output)
-
-def clear_output(evt):
-    output_div = document["output"]
-    test_results = document["test-results"]
-    output_div.text = ""
-    test_results.innerHTML = ""
-
-def run_code(evt=None):
-    clear_output(None)
-    code = editor.getValue()
-    try:
-        exec(code, globals())
-    except Exception as e:
-        sys.stderr.write(f"Error: {str(e)}\n{traceback.format_exc()}")
-
-def run_tests(evt=None):
-    if not current_exercise or "tests" not in current_exercise:
-        return
-    
-    clear_output(None)
-    test_results = document["test-results"]
-    code = editor.getValue()
-    
-    # Create a new namespace for testing
-    test_globals = {}
-    test_globals.update(globals())
-    
-    try:
-        # First execute the student's code
-        exec(code, test_globals)
-        
-        # Then run each test
-        all_passed = True
-        for i, test in enumerate(current_exercise["tests"], 1):
-            try:
-                result = str(eval(test["input"], test_globals))
-                expected = str(test["expected"])
-                
-                if result == expected:
-                    test_results.innerHTML += f'<div class="test-pass">✓ Test {i} passed: {test["input"]} = {expected}</div>'
-                else:
-                    all_passed = False
-                    test_results.innerHTML += f'<div class="test-fail">✗ Test {i} failed: {test["input"]}<br>Expected: {expected}<br>Got: {result}</div>'
-            except Exception as e:
-                all_passed = False
-                test_results.innerHTML += f'<div class="test-fail">✗ Test {i} error: {str(e)}</div>'
-        
-        if all_passed:
-            test_results.innerHTML += '<div class="test-pass">All tests passed! 🎉</div>'
+class IDE:
+    def __init__(self):
+        try:
+            console.log("Initializing IDE...")
+            self.editor = window.CodeMirror.fromTextArea(
+                document["python-code"],
+                {
+                    "mode": "python",
+                    "theme": "dracula",
+                    "lineNumbers": True,
+                    "indentUnit": 4,
+                    "tabSize": 4,
+                    "lineWrapping": True
+                }
+            )
+            console.log("CodeMirror initialized")
+            self.exercises = []
+            self.bind_events()
             
-    except Exception as e:
-        test_results.innerHTML = f'<div class="test-fail">Error: {str(e)}</div>'
+        except Exception as e:
+            console.error(f"Error during initialization: {str(e)}")
+    
+    def bind_events(self):
+        """Bind event handlers"""
+        try:
+            document["run-btn"].bind("click", self.run_code)
+            document["clear-btn"].bind("click", self.clear_output)
+            document["test-btn"].bind("click", self.run_tests)
+            document["browse-exercises-btn"].bind("click", self.show_exercise_modal)
+            document["close-modal"].bind("click", lambda evt: self.hide_modal())
+            document["exercise-modal"].bind("click", self.hide_exercise_modal)
+            document["modal-search-box"].bind("input", self.update_exercise_list)
+            document["modal-difficulty-filter"].bind("change", self.update_exercise_list)
+            document["modal-category-filter"].bind("change", self.update_exercise_list)
+            document["clear-filters-btn"].bind("click", self.clear_filters)
+            console.log("Event handlers bound")
+        except Exception as e:
+            console.error(f"Error binding events: {str(e)}")
 
-class OutputInterceptor:
-    def __init__(self, output_div):
-        self.output_div = output_div
-        
-    def write(self, text):
-        self.output_div.text += str(text)
-        
-    def clear(self):
-        self.output_div.text = ""
+    def init_filters(self):
+        """Initialize the difficulty and category filters"""
+        try:
+            console.log("Initializing filters...")
+            
+            # Get unique difficulties and categories
+            difficulties = []
+            categories = []
+            seen_difficulties = {}
+            seen_categories = {}
+            
+            for exercise in self.exercises:
+                difficulty = exercise.get("difficulty", "medium")
+                category = exercise.get("category", "general")
+                
+                if difficulty not in seen_difficulties:
+                    difficulties.append(difficulty)
+                    seen_difficulties[difficulty] = True
+                    
+                if category not in seen_categories:
+                    categories.append(category)
+                    seen_categories[category] = True
+            
+            difficulties.sort()
+            categories.sort()
+            
+            console.log(f"Found difficulties: {difficulties}")
+            console.log(f"Found categories: {categories}")
+            
+            # Update difficulty filter
+            difficulty_filter = document["modal-difficulty-filter"]
+            difficulty_filter.clear()
+            difficulty_filter <= html.OPTION("All Difficulties", value="")
+            for difficulty in difficulties:
+                difficulty_filter <= html.OPTION(difficulty.capitalize(), value=difficulty)
+            
+            # Update category filter
+            category_filter = document["modal-category-filter"]
+            category_filter.clear()
+            category_filter <= html.OPTION("All Categories", value="")
+            for category in categories:
+                category_filter <= html.OPTION(category.capitalize(), value=category)
+                
+            console.log("Filters initialized")
+            
+        except Exception as e:
+            console.error(f"Error initializing filters: {str(e)}")
 
-def filter_exercises(search_text="", difficulty="", category=""):
-    filtered = exercises[:]
-    
-    if search_text:
-        search_text = search_text.lower()
-        filtered = [e for e in filtered if search_text in e["title"].lower() or search_text in e["description"].lower()]
-    
-    if difficulty:
-        filtered = [e for e in filtered if e["difficulty"] == difficulty]
-    
-    if category:
-        filtered = [e for e in filtered if e["category"] == category]
-    
-    return filtered
+    def run_code(self, evt=None):
+        """Run the code in the editor"""
+        try:
+            # Get code from editor
+            code = self.editor.getValue()
+            
+            # Create namespace for execution
+            ns = {}
+            
+            # Execute code and capture output
+            output = []
+            def capture_print(*args, **kwargs):
+                output.append(' '.join(str(arg) for arg in args))
+            
+            # Replace print function
+            old_print = __builtins__.print
+            __builtins__.print = capture_print
+            
+            # Run the code
+            exec(code, ns)
+            
+            # Restore print function
+            __builtins__.print = old_print
+            
+            # Show output
+            document["output"].text = '\n'.join(output)
+            
+        except Exception as e:
+            document["output"].text = f"Error: {str(e)}"
 
-def update_exercise_list(*args):
-    search_text = document["modal-search-box"].value
-    difficulty = document["modal-difficulty-filter"].value
-    category = document["modal-category-filter"].value
-    
-    filtered_exercises = filter_exercises(search_text, difficulty, category)
-    exercise_list = document["exercise-list"]
-    exercise_list.clear()
-    
-    for exercise in filtered_exercises:
-        item = html.DIV(Class="exercise-item")
-        title = html.DIV(exercise["title"], Class=f"exercise-title difficulty-{exercise['difficulty']}")
-        desc = html.DIV(exercise["description"], Class="exercise-description")
-        tags = html.DIV(Class="exercise-tags")
-        tags <= html.SPAN(exercise["difficulty"].capitalize(), Class="tag")
-        tags <= html.SPAN(exercise["category"].capitalize(), Class="tag")
-        
-        item <= title
-        item <= desc
-        item <= tags
-        
-        def load_this_exercise(evt, exercise=exercise):
-            load_exercise(exercise)
+    def show_exercise_modal(self, evt=None):
+        """Show the exercise modal"""
+        try:
+            console.log("Opening modal...")
+            modal = document["exercise-modal"]
+            if modal:
+                modal.style.display = "block"
+                if not self.exercises:
+                    console.log("Loading exercises...")
+                    self.load_exercises()
+                else:
+                    console.log("Using cached exercises...")
+                    self.update_exercise_list()
+        except Exception as e:
+            console.error(f"Error showing modal: {str(e)}")
+
+    def hide_modal(self):
+        """Hide the modal"""
+        try:
             document["exercise-modal"].style.display = "none"
-        
-        item.bind("click", load_this_exercise)
-        exercise_list <= item
+        except Exception as e:
+            console.error(f"Error hiding modal: {str(e)}")
 
-def load_exercise(exercise_data):
-    global current_exercise
-    current_exercise = exercise_data
-    
-    # Update exercise info
-    info_div = document.select_one(".exercise-info")
-    if info_div:
-        info_div.clear()
-        info_div <= html.DIV(exercise_data["title"], Class="exercise-title")
-        info_div <= html.DIV(exercise_data["description"], Class="exercise-description")
-        tags = html.DIV(Class="exercise-tags")
-        tags <= html.SPAN(exercise_data["difficulty"].capitalize(), Class="tag")
-        tags <= html.SPAN(exercise_data["category"].capitalize(), Class="tag")
-        info_div <= tags
-    
-    # Set code in editor
-    editor.setValue(exercise_data["code"])
+    def hide_exercise_modal(self, evt):
+        """Hide modal when clicking outside content"""
+        if evt.target.id == "exercise-modal":
+            self.hide_modal()
 
-def clear_filters(evt=None):
-    # Reset all filter inputs
-    document["modal-search-box"].value = ""
-    document["modal-difficulty-filter"].value = ""
-    document["modal-category-filter"].value = ""
-    # Update the exercise list
-    update_exercise_list()
+    def clear_filters(self, evt=None):
+        """Clear all filter inputs"""
+        try:
+            document["modal-search-box"].value = ""
+            document["modal-difficulty-filter"].value = ""
+            document["modal-category-filter"].value = ""
+            self.update_exercise_list()
+        except Exception as e:
+            console.error(f"Error clearing filters: {str(e)}")
 
-# Initialize event listeners
-document["modal-search-box"].bind("input", update_exercise_list)
-document["modal-difficulty-filter"].bind("change", update_exercise_list)
-document["modal-category-filter"].bind("change", update_exercise_list)
-document["clear-filters"].bind("click", clear_filters)
+    def load_exercises(self):
+        """Load exercises from remote API"""
+        try:
+            console.log("Starting exercise load...")
+            from browser import ajax
+            req = ajax.ajax()
+            req.bind('complete', self.on_exercises_loaded)
+            req.open('GET', 'https://api.apispreadsheets.com/data/QmaAZXoHXA1eLa9H/', True)
+            req.send()
+            console.log("Exercise request sent")
+        except Exception as e:
+            console.error(f"Error loading exercises: {str(e)}")
 
-# Populate category filter with exact values
-categories = sorted(list(set(ex["category"] for ex in exercises)))
-category_select = document["modal-category-filter"]
-for category in categories:
-    category_select <= html.OPTION(category.capitalize(), value=category)
+    def on_exercises_loaded(self, req):
+        """Handle loaded exercises data"""
+        try:
+            console.log(f"Exercise response received, status: {req.status}")
+            if req.status == 200:
+                data = json.loads(req.text)
+                console.log("Response parsed")
+                self.exercises = data.get("data", [])
+                console.log(f"Found {len(self.exercises)} exercises")
+                self.init_filters()  # Initialize filters after loading exercises
+                self.update_exercise_list()
+            else:
+                console.error(f"Failed to load exercises: {req.status}")
+        except Exception as e:
+            console.error(f"Error processing exercises: {str(e)}")
 
-# Initial setup
-init()
-update_exercise_list()
+    def update_exercise_list(self, evt=None):
+        """Update the filtered exercise list"""
+        try:
+            console.log("Updating exercise list...")
+            if not self.exercises:
+                console.log("No exercises to display")
+                return
+                
+            search = document["modal-search-box"].value.lower()
+            difficulty = document["modal-difficulty-filter"].value
+            category = document["modal-category-filter"].value
+            
+            filtered = [e for e in self.exercises 
+                       if (not search or search in e["title"].lower() or search in e.get("description", "").lower())
+                       and (not difficulty or e.get("difficulty", "") == difficulty)
+                       and (not category or e.get("category", "") == category)]
+            
+            console.log(f"Filtered to {len(filtered)} exercises")
+            
+            list_div = document["exercise-list"]
+            list_div.clear()
+            
+            if not filtered:
+                list_div <= html.DIV("No exercises found", Class="no-results")
+                return
+                
+            for exercise in filtered:
+                item = html.DIV(Class="exercise-item")
+                title = html.DIV(exercise["title"], Class=f"exercise-title difficulty-{exercise.get('difficulty', 'medium')}")
+                desc = html.DIV(Class="exercise-description")
+                desc.innerHTML = window.marked.parse(exercise.get("description", "No description available"))
+                
+                item <= title
+                item <= desc
+                item <= html.DIV(
+                    html.SPAN(exercise.get("difficulty", "medium").capitalize(), Class="tag") +
+                    html.SPAN(exercise.get("category", "general").capitalize(), Class="tag"),
+                    Class="exercise-tags"
+                )
+                
+                def load_exercise(evt, exercise=exercise):
+                    self.load_exercise(exercise)
+                    self.hide_modal()
+                
+                item.bind("click", load_exercise)
+                list_div <= item
+                
+            console.log("Exercise list updated")
+                
+        except Exception as e:
+            console.error(f"Error updating exercise list: {str(e)}")
+
+    def load_exercise(self, exercise):
+        """Load an exercise into the editor"""
+        try:
+            self.current_exercise = exercise
+            
+            # Clean up starter code by replacing escaped newlines
+            starter_code = exercise.get("starter_code", "")
+            if starter_code:
+                # Replace escaped newlines with actual newlines
+                starter_code = starter_code.replace('\\n', '\n')
+                # Remove any quotes wrapping the entire code
+                starter_code = starter_code.strip('"\'')
+            
+            self.editor.setValue(starter_code)
+            
+            info_div = document.select_one(".exercise-info")
+            if info_div:
+                info_div.clear()
+                info_div.innerHTML = f"""
+                    <div class="exercise-title-bar">
+                        <div class="exercise-title">{exercise["title"]}</div>
+                        <button class="toggle-description">Description</button>
+                    </div>
+                    <div class="exercise-description">{window.marked.parse(exercise.get("description", ""))}</div>
+                    <div class="exercise-tags">
+                        <span class="tag">{exercise.get("difficulty", "medium").capitalize()}</span>
+                        <span class="tag">{exercise.get("category", "general").capitalize()}</span>
+                    </div>
+                """
+        except Exception as e:
+            console.error(f"Error loading exercise: {str(e)}")
+
+    def clear_output(self, evt=None):
+        """Clear the output area"""
+        try:
+            document["output"].text = ""
+            document["test-results"].innerHTML = ""  # Also clear test results if present
+        except Exception as e:
+            console.error(f"Error clearing output: {str(e)}")
+
+    def run_tests(self, evt=None):
+        """Run test cases for the current exercise"""
+        try:
+            if not hasattr(self, 'current_exercise'):
+                document["test-results"].innerHTML = '<div class="test-fail">Please load an exercise first</div>'
+                return
+
+            # Get test cases
+            test_cases = self.current_exercise.get("test_cases", [])
+            # Only parse if it's a string
+            if isinstance(test_cases, str):
+                test_cases = json.loads(test_cases)
+            
+            if not test_cases:
+                document["test-results"].innerHTML = '<div class="test-fail">No test cases available</div>'
+                return
+
+            # Get user's code
+            code = self.editor.getValue()
+            
+            # Clear previous results
+            document["test-results"].innerHTML = ""
+            
+            # Create namespace for testing
+            ns = {}
+            
+            try:
+                # First execute the student's code
+                exec(code, ns)
+                
+                # Run each test case
+                all_passed = True
+                
+                for i, test in enumerate(test_cases, 1):
+                    try:
+                        # Get function name from code
+                        import re
+                        func_match = re.search(r'def\s+(\w+)', code)
+                        if not func_match:
+                            raise ValueError("Could not find function definition")
+                        func_name = func_match.group(1)
+                        
+                        # Get function from namespace
+                        if func_name not in ns:
+                            raise ValueError(f"Function {func_name} not found")
+                        func = ns[func_name]
+                        
+                        # Get test case data
+                        inputs = test.get("inputs", [])  # Already a list, no need to parse
+                        expected = test.get("expected")
+                        description = test.get("description", f"Test case {i}")
+                        
+                        # Run test
+                        result = str(func(*inputs))
+                        expected = str(expected)
+                        
+                        if result == expected:
+                            document["test-results"].innerHTML += f'<div class="test-pass">✓ {description} passed</div>'
+                        else:
+                            all_passed = False
+                            document["test-results"].innerHTML += f'<div class="test-fail">✗ {description} failed<br>Expected: {expected}<br>Got: {result}</div>'
+                            
+                    except Exception as e:
+                        all_passed = False
+                        document["test-results"].innerHTML += f'<div class="test-fail">✗ Test {i} error: {str(e)}</div>'
+                        console.error(f"Test {i} error: {str(e)}")  # Added for debugging
+                
+                if all_passed:
+                    document["test-results"].innerHTML += '<div class="test-pass">All tests passed! 🎉</div>'
+                    
+            except Exception as e:
+                document["test-results"].innerHTML = f'<div class="test-fail">Error in code: {str(e)}</div>'
+                console.error(f"Code error: {str(e)}")  # Added for debugging
+                
+        except Exception as e:
+            document["test-results"].innerHTML = f'<div class="test-fail">Error running tests: {str(e)}</div>'
+            console.error(f"Error running tests: {str(e)}")  # Added for debugging
+
+# Initialize the IDE
+ide = IDE()
     </script>
 </body>
 </html>
