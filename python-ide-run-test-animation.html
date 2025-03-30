@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
     <style>
-        .python-ide-widget {
+        #ide-container {
             font-family: system-ui, -apple-system, sans-serif;
             background: #f5f5f5;
             border-radius: 8px;
@@ -21,7 +21,7 @@
             margin: 0 auto;
         }
 
-        .ide-container {
+        .ide-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
@@ -97,79 +97,51 @@
             background: #018786;
         }
     </style>
-    <script>
-        window.addEventListener('load', function() {
-            brython({debug: 1});
-        });
-    </script>
 </head>
 <body>
-    <!-- Container for the IDE -->
-    <div id="my-python-ide">
-        <div class="python-ide-widget">
-            <div class="ide-container">
-                <!-- Editor Section -->
-                <div class="editor-section">
-                    <div>Python Code</div>
-                    <textarea id="code-editor"></textarea>
-                    <div class="controls">
-                        <button id="run-btn">Run Code</button>
-                        <button id="reset-btn" class="secondary">Reset</button>
-                    </div>
+    <div id="ide-container">
+        <div class="ide-grid">
+            <!-- Editor Section -->
+            <div class="editor-section">
+                <div>Python Code</div>
+                <textarea id="code-editor"></textarea>
+                <div class="controls">
+                    <button id="run-btn">Run Code</button>
+                    <button id="reset-btn" class="secondary">Reset</button>
                 </div>
-                
-                <!-- Output Section -->
-                <div class="output-section">
-                    <div>Animation</div>
-                    <div class="canvas-container">
-                        <canvas id="animation-canvas" width="400" height="400"></canvas>
-                    </div>
-                    <div>Console Output</div>
-                    <div id="output-console"></div>
+            </div>
+            
+            <!-- Output Section -->
+            <div class="output-section">
+                <div>Animation</div>
+                <div class="canvas-container">
+                    <canvas id="animation-canvas" width="400" height="400"></canvas>
                 </div>
+                <div>Console Output</div>
+                <div id="output-console"></div>
             </div>
         </div>
     </div>
 
+    <script>
+        // Initialize Brython only once
+        if (!window.__BRYTHON_INITIALIZED__) {
+            window.addEventListener('load', function() {
+                brython({debug: 1});
+                window.__BRYTHON_INITIALIZED__ = true;
+            });
+        }
+    </script>
+
     <script type="text/python">
-from browser import document, window, html
+from browser import document, window, timer
 import javascript
 import sys
 import traceback
 
-class PythonIDE:
-    def __init__(self):
-        self.setup_ide()
-        self.setup_brython_console()
-        
-    def setup_ide(self):
-        # Initialize CodeMirror
-        self.setup_codemirror()
-        
-        # Bind event handlers
-        document["run-btn"].bind("click", self.run_code)
-        document["reset-btn"].bind("click", self.reset_code)
-        
-    def setup_codemirror(self):
-        self.editor = window.CodeMirror.fromTextArea(
-            document["code-editor"],
-            {
-                "mode": "python",
-                "theme": "monokai",
-                "lineNumbers": True,
-                "autoCloseBrackets": True,
-                "matchBrackets": True,
-                "indentUnit": 4,
-                "tabSize": 4,
-                "indentWithTabs": False,
-                "extraKeys": {"Tab": "indentMore", "Shift-Tab": "indentLess"},
-            }
-        )
-        
-        # Set initial code
-        self.initial_code = """# Simple bouncing ball animation
+INITIAL_CODE = '''# Simple bouncing ball animation
 import math
-from browser import window, timer
+from browser import timer
 
 # Get canvas context
 canvas = document["animation-canvas"]
@@ -215,63 +187,88 @@ def animate(time):
 print("Starting animation...")
 # Start animation loop
 timer.request_animation_frame(animate)
-"""
-        self.editor.setValue(self.initial_code)
-        
-    def setup_brython_console(self):
-        def write_console(text):
-            console = document["output-console"]
-            console.text = console.text + str(text)
-            console.scrollTop = console.scrollHeight
-            
-        sys.stdout.write = write_console
-        sys.stderr.write = write_console
-        
-    def run_code(self, evt=None):
-        try:
-            # Clear output
-            document["output-console"].text = ""
-            print("Starting code execution...")
-            
-            # Clear canvas
-            canvas = document["animation-canvas"]
-            ctx = canvas.getContext('2d')
-            ctx.clearRect(0, 0, 400, 400)
-            print("Canvas cleared...")
-            
-            # Get code from editor
-            code = self.editor.getValue()
-            print("Got code from editor...")
-            
-            # Add canvas to namespace
-            namespace = {
-                'canvas': canvas,
-                'document': document,
-                'window': window,
-                'javascript': javascript
-            }
-            print("Namespace prepared...")
-            
-            # Execute code
-            print("Executing code...")
-            exec(code, namespace)
-            print("Code executed successfully!")
-            
-        except Exception as e:
-            print(f"Error during execution: {str(e)}")
-            traceback.print_exc(file=sys.stdout)
-            
-    def reset_code(self, evt=None):
-        self.editor.setValue(self.initial_code)
+'''
+
+def write_console(text):
+    console = document["output-console"]
+    console.text = console.text + str(text)
+    console.scrollTop = console.scrollHeight
+
+def run_code(evt=None):
+    try:
+        # Clear output
         document["output-console"].text = ""
+        print("Starting code execution...")
         
         # Clear canvas
         canvas = document["animation-canvas"]
         ctx = canvas.getContext('2d')
         ctx.clearRect(0, 0, 400, 400)
+        print("Canvas cleared...")
+        
+        # Get code from editor
+        code = editor.getValue()
+        print("Got code from editor...")
+        
+        # Add canvas to namespace
+        namespace = {
+            'canvas': canvas,
+            'document': document,
+            'window': window,
+            'javascript': javascript,
+            'timer': timer
+        }
+        print("Namespace prepared...")
+        
+        # Execute code
+        print("Executing code...")
+        exec(code, namespace)
+        print("Code executed successfully!")
+        
+    except Exception as e:
+        print(f"Error during execution: {str(e)}")
+        traceback.print_exc(file=sys.stdout)
 
-# Initialize IDE
-ide = PythonIDE()
+def reset_code(evt=None):
+    editor.setValue(INITIAL_CODE)
+    document["output-console"].text = ""
+    
+    # Clear canvas
+    canvas = document["animation-canvas"]
+    ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, 400, 400)
+
+# Initialize only if not already done
+if not hasattr(window, '__IDE_INITIALIZED__'):
+    # Set up console
+    sys.stdout.write = write_console
+    sys.stderr.write = write_console
+
+    # Initialize CodeMirror
+    editor = window.CodeMirror.fromTextArea(
+        document["code-editor"],
+        {
+            "mode": "python",
+            "theme": "monokai",
+            "lineNumbers": True,
+            "autoCloseBrackets": True,
+            "matchBrackets": True,
+            "indentUnit": 4,
+            "tabSize": 4,
+            "indentWithTabs": False,
+            "extraKeys": {"Tab": "indentMore", "Shift-Tab": "indentLess"},
+        }
+    )
+
+    # Bind event handlers
+    document["run-btn"].bind("click", run_code)
+    document["reset-btn"].bind("click", reset_code)
+
+    # Set initial code (do this only once)
+    reset_code()
+    
+    # Mark as initialized
+    window.__IDE_INITIALIZED__ = True
     </script>
 </body>
 </html>
